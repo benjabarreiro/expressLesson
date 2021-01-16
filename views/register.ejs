@@ -4,12 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="stylesheet" href="/css/register.css">
 </head>
+<%- include('partials/header.ejs') %> 
 <body>
     <h1>Register</h1>
     <form action="/users/register" method="POST">
         <label for="">Nombre</label>
-        <input type="text" name="name">
+        <input type="text" name="nombre">
+        <br>
+        <label for="">Edad</label>
+        <input type="text" name="edad">
+        <br>
+        <label for="">Email</label>
+        <input type="email" name="email">
+        <br>
+        <input type="submit" value="Registrarse">
+        <!--<p>Hobbies</p>
+        <% for (let i=0; i<10; i++) { %>
+            <label for="">Hobby <%= i %> </label>
+            <% if(i%2 == 0) { %> 
+                <input type="text" name="hobbies[]" class="par">
+            <% } else { %> 
+                <input type="text" name="hobbies[]" class="impar">
+            <% } %> 
+        <% } %>  -->
     </form>
 </body>
 </html>
