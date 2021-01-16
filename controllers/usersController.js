@@ -1,3 +1,6 @@
+let fs = require('fs');
+let bcrypt = require('bcrypt');
+
 module.exports = {
     register: function(req, res) {
         res.render('register');
@@ -5,27 +8,38 @@ module.exports = {
     login: function(req, res) {
         res.render('login');
     },
+    processLogin: function(req, res) {
+        let archivoUsuario = fs.readFileSync('usarios.json', {encoding: 'utf-8'});
+
+        let usuarios;
+
+        if(archivoUsuario == "") {
+            usuarios = [];
+        } else {
+            usuarios = JSON.parse(archivoUsuario);
+        }
+
+        for(let i=0; i<usuarios.length; i++) {
+            if(usuarios[i].email == req.body.email && bcrypt.compareSync(req.body.password, usuarios[i].password)) {
+                res.send('Te encontré!');
+            }
+        }
+
+        res.send('error');
+    },
     list: function(req, res) {
-        let users = [
-            "Darío",
-            "Javier",
-            "Maru",
-            "Ale",
-            "Alan"
-        ];
+        let archivoJSON = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
+
+        let users = JSON.parse(archivoJSON);
         res.render('userList', {users:users});
     },
     search: function(req, res) {
         let loQueBuscoElUsuario = req.query.search;
-        
-        let users = [
-            "Darío",
-            "Javier",
-            "Maru",
-            "Ale",
-            "Alan"
-        ];
 
+        let archivoJSON = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
+
+        let users = JSON.parse(archivoJSON);
+        
         let usersResults = [];
 
         for(let i=0; i<users.length; i++) {
@@ -36,12 +50,28 @@ module.exports = {
 
         res.render('usersResults', {usersResults: usersResults});
     },
-    create: function(req, res) {
+    create: function(req, res, next) {
         let usuario = {
             nombre: req.body.nombre,
             edad: req.body.edad,
-            email: req.body.email
+            email: req.body.email,
+            password: bcrypt.hashSync(req.body.password, 10)
         };
+
+        //GUARDARLA
+        let archivoUsuario = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
+        let usuarios;
+        if(archivoUsuario == "") {
+            usuarios = [];
+        } else {
+            usuarios = JSON.parse(archivoUsuario);
+        }
+
+        usuarios.push(usuario);
+
+        usuariosJSON = JSON.stringify(usuarios);
+
+        fs.writeFileSync('usuarios.json', usuariosJSON)
 
         res.redirect('/users/list');
     },

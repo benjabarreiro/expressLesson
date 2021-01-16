@@ -9,5 +9,14 @@
 <%- include('partials/header.ejs') %> 
 <body>
     <h1>Log In</h1>
+    <form action="/users/login" method="POST">
+        <label for="">Email</label>
+        <input type="email" name="email">
+        <br>
+        <label for="">Password</label>
+        <input type="password">
+        <br>
+        <button type="submit">Login</button>
+    </form>
 </body>
 </html>
