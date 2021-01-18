@@ -1,5 +1,6 @@
 let fs = require('fs');
 let bcrypt = require('bcrypt');
+const {check, validationResult, body} = require('express-validator');
 
 module.exports = {
     register: function(req, res) {
@@ -51,29 +52,38 @@ module.exports = {
         res.render('usersResults', {usersResults: usersResults});
     },
     create: function(req, res, next) {
-        let usuario = {
-            nombre: req.body.nombre,
-            edad: req.body.edad,
-            email: req.body.email,
-            password: bcrypt.hashSync(req.body.password, 10)
-        };
+        console.log(validationResult);
 
-        //GUARDARLA
-        let archivoUsuario = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
-        let usuarios;
-        if(archivoUsuario == "") {
-            usuarios = [];
+        let errors = validationResult(req);
+
+        if(errors.isEmpty()) {
+            let usuario = {
+                username: req.body.username,
+                edad: req.body.edad,
+                email: req.body.email,
+                password: bcrypt.hashSync(req.body.password, 10),
+                avatar: req.files[0].filename
+            };
+    
+            //GUARDARLA
+            let archivoUsuario = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
+            let usuarios;
+            if(archivoUsuario == "") {
+                usuarios = [];
+            } else {
+                usuarios = JSON.parse(archivoUsuario);
+            }
+    
+            usuarios.push(usuario);
+    
+            usuariosJSON = JSON.stringify(usuarios);
+    
+            fs.writeFileSync('usuarios.json', usuariosJSON)
+    
+            res.redirect('/users/list');
         } else {
-            usuarios = JSON.parse(archivoUsuario);
-        }
-
-        usuarios.push(usuario);
-
-        usuariosJSON = JSON.stringify(usuarios);
-
-        fs.writeFileSync('usuarios.json', usuariosJSON)
-
-        res.redirect('/users/list');
+            res.render('register', {errors: errors.errors});
+        };
     },
     edit: function(req, res) {
         let = idUser = req.params.idUser;
