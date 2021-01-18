@@ -5,6 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const logDBMiddleware = require('../middlewares/logDBMiddleware');
 const {check, validationResult, body} = require('express-validator');
+const guestMiddleware = require('../middlewares/guestMiddleware');
 const fs = require('fs');
 
 var storage = multer.diskStorage({
@@ -22,7 +23,7 @@ router.get('/', function(req, res) {
     res.send('Users');
 });
 
-router.get('/register', usersController.register);
+router.get('/register', guestMiddleware, usersController.register);
 
 router.post('/register', upload.any(), logDBMiddleware, [
     check('username').isLength({min: 1}).withMessage('El campo nombre debe estar completo'),
@@ -50,7 +51,18 @@ router.post('/register', upload.any(), logDBMiddleware, [
 
 router.get('/login', usersController.login);
 
-router.post('/login', usersController.processLogin);
+router.post('/login', [
+    check('email').isEmail().withMessage('Email inválido'),
+    check('password').isLength({min: 8}).withMessage('Contraseña incorrecta')
+], usersController.processLogin);
+
+router.get('/check', function(req, res) {
+    if(req.session.usuarioLogueado == undefined) {
+        res.send('No estás logueado');
+    } else {
+        res.send('El usuario logueado es ' + req.session.usuarioLogueado.email);
+    }
+})
 
 router.get('/list', usersController.list);
 

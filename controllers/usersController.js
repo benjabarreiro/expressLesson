@@ -10,26 +10,46 @@ module.exports = {
         res.render('login');
     },
     processLogin: function(req, res) {
-        let archivoUsuario = fs.readFileSync('usarios.json', {encoding: 'utf-8'});
+        let errors = validationResult(req);
 
-        let usuarios;
-
-        if(archivoUsuario == "") {
-            usuarios = [];
-        } else {
-            usuarios = JSON.parse(archivoUsuario);
-        }
-
-        for(let i=0; i<usuarios.length; i++) {
-            if(usuarios[i].email == req.body.email && bcrypt.compareSync(req.body.password, usuarios[i].password)) {
-                res.send('Te encontré!');
+        if(errors.isEmpty()) {
+            let usersJSON = fs.readFileSync('users.json', {encoding: 'utf-8'});
+            let users;
+            if(usersJSON == "") {
+                users = [];
+            } else {
+                users = JSON.parse(usersJSON);
             }
-        }
+            let usuarioALoguearse;
 
-        res.send('error');
+            for(let i=0; i<users.length; i++) {
+                if(users[i].email == req.body.email) {
+                    if(bcrypt.compareSync(req.body.password, users[i].password)) {
+                        usuarioALoguearse = users[i];
+                        break;
+                    }
+                }
+            }
+
+            if(usuarioALoguearse == undefined) {
+                return res.render('login', {errors: [
+                    {msg: 'Credenciales invalidas'}
+                ]});
+            }
+
+            req.session.usuarioLogueado = usuarioALoguearse;
+
+            if(req.body.recordame != undefined) {
+                res.cookie('recordame', usuarioALoguearse.email, {maxAge: 60000})
+            }
+
+            res.render('userList');
+        } else {
+            return res.render('login', {errors: errors.errors});
+        }
     },
     list: function(req, res) {
-        let archivoJSON = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
+        let archivoJSON = fs.readFileSync('users.json', {encoding: 'utf-8'});
 
         let users = JSON.parse(archivoJSON);
         res.render('userList', {users:users});
@@ -37,7 +57,7 @@ module.exports = {
     search: function(req, res) {
         let loQueBuscoElUsuario = req.query.search;
 
-        let archivoJSON = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
+        let archivoJSON = fs.readFileSync('users.json', {encoding: 'utf-8'});
 
         let users = JSON.parse(archivoJSON);
         
@@ -62,11 +82,11 @@ module.exports = {
                 edad: req.body.edad,
                 email: req.body.email,
                 password: bcrypt.hashSync(req.body.password, 10),
-                avatar: req.files[0].filename
+                //avatar: req.files[0].filename
             };
     
             //GUARDARLA
-            let archivoUsuario = fs.readFileSync('usuarios.json', {encoding: 'utf-8'});
+            let archivoUsuario = fs.readFileSync('users.json', {encoding: 'utf-8'});
             let usuarios;
             if(archivoUsuario == "") {
                 usuarios = [];
@@ -78,7 +98,7 @@ module.exports = {
     
             usuariosJSON = JSON.stringify(usuarios);
     
-            fs.writeFileSync('usuarios.json', usuariosJSON)
+            fs.writeFileSync('users.json', usuariosJSON)
     
             res.redirect('/users/list');
         } else {
